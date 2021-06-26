@@ -22,7 +22,7 @@
     },
     "price": {
       "type": "decimal",
-      "private": true
+      "private": false
     },
     "thumbnail": {
       "model": "file",

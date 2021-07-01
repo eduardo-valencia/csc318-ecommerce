@@ -1,3 +1,13 @@
-# Strapi application
+## Commands
 
-A quick description of your strapi application
+### Install the packages
+
+```bash
+yarn install
+```
+
+### Start the server
+
+```bash
+yarn develop
+```

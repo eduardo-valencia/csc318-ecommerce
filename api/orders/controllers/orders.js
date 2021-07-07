@@ -5,7 +5,7 @@ const configureStripe = require("stripe");
 
 const stripe = configureStripe(process.env.STRIPE_SECRET_KEY);
 
-const createOrder = (ctx, amountInCents) => {
+const createOrder = async (ctx, amountInCents) => {
   let entity;
   if (ctx.is("multipart")) {
     ctx.throw("Multipart requests are not supported.");
@@ -25,7 +25,7 @@ const addTotal = (product, quantity, total) => {
 };
 
 const findProductAndAddTotal = async (ctx, total) => {
-  const { quantity, product: productId } = ctx.request.body;
+  const { quantity, product: productId } = ctx.request.body.products;
   const product = await strapi.services.orders.find({ id: productId });
   if (product) {
     return addTotal(product, quantity, total);
@@ -44,7 +44,11 @@ const getTotal = async (ctx) => {
 
 const tryCreatingCharge = async (ctx, totalInCents) => {
   try {
-    return await stripe.charges.create({ amount: totalInCents });
+    return await stripe.charges.create({
+      ...ctx.request.body.token,
+      amount: totalInCents,
+      currency: "USD",
+    });
   } catch (error) {
     console.error(error);
     ctx.throw("Sorry, there was a problem processing your payment.");

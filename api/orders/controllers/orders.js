@@ -1,8 +1,68 @@
-'use strict';
+"use strict";
 
-/**
- * Read the documentation (https://strapi.io/documentation/developer-docs/latest/development/backend-customization.html#core-controllers)
- * to customize this controller
- */
+const { sanitizeEntity } = require("strapi-utils");
+const configureStripe = require("stripe");
 
-module.exports = {};
+const stripe = configureStripe(process.env.STRIPE_SECRET_KEY);
+
+const createOrder = (ctx, amountInCents) => {
+  let entity;
+  if (ctx.is("multipart")) {
+    ctx.throw("Multipart requests are not supported.");
+  } else {
+    entity = await strapi.services.orders.create({
+      ...ctx.request.body,
+      amountInCents,
+    });
+  }
+  return sanitizeEntity(entity, { model: strapi.models.orders });
+};
+
+const addTotal = (product, quantity, total) => {
+  const priceInCents = product.price * 100;
+  const priceForQuantity = quantity * priceInCents;
+  total += priceForQuantity;
+};
+
+const findProductAndAddTotal = async (ctx, total) => {
+  const { quantity, product: productId } = ctx.request.body;
+  const product = await strapi.services.orders.find({ id: productId });
+  if (product) {
+    return addTotal(product, quantity, total);
+  }
+  return ctx.throw(`Could not find product ${productId}`);
+};
+
+const getTotal = async (ctx) => {
+  let totalInCents = 0;
+  const { products } = ctx.request.body;
+  for (let productIndex = 0; productIndex < products.length; productIndex++) {
+    await findProductAndAddTotal(ctx, totalInCents);
+  }
+  return totalInCents;
+};
+
+const tryCreatingCharge = async (ctx, totalInCents) => {
+  try {
+    return await stripe.charges.create({ amount: totalInCents });
+  } catch (error) {
+    console.error(error);
+    ctx.throw("Sorry, there was a problem processing your payment.");
+  }
+};
+
+module.exports = {
+  /**
+   * Create a record.
+   *
+   * @return {Object}
+   */
+
+  async create(ctx) {
+    const totalInCents = getTotal(ctx);
+    const charge = await tryCreatingCharge(ctx, totalInCents);
+    if (charge) {
+      return createOrder(ctx, amountInCents);
+    }
+  },
+};

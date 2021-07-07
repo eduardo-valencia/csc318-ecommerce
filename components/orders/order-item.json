@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_orders_order_items",
+  "info": {
+    "name": "OrderItem",
+    "icon": "ad"
+  },
+  "options": {},
+  "attributes": {
+    "product": {
+      "model": "products"
+    },
+    "quantity": {
+      "type": "integer"
+    }
+  }
+}

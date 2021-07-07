@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "name": "Orders"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "amountInCents": {
+      "type": "integer"
+    },
+    "OrderItem": {
+      "type": "component",
+      "repeatable": true,
+      "component": "orders.order-item"
+    }
+  }
+}

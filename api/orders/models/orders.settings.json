@@ -19,7 +19,7 @@
     "amountInCents": {
       "type": "integer"
     },
-    "OrderItem": {
+    "products": {
       "type": "component",
       "repeatable": true,
       "component": "orders.order-item"

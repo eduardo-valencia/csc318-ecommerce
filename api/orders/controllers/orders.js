@@ -25,7 +25,7 @@ const addTotal = (product, quantity, total) => {
 };
 
 const findProductAndAddTotal = async (ctx, total) => {
-  const { quantity, product: productId } = ctx.request.body.products;
+  const { quantity, slug: productId } = ctx.request.body.products;
   const product = await strapi.services.orders.find({ id: productId });
   if (product) {
     return addTotal(product, quantity, total);

@@ -6,14 +6,20 @@ const configureStripe = require("stripe");
 const stripe = configureStripe(process.env.STRIPE_SECRET_KEY);
 
 const createOrder = async (ctx, amountInCents) => {
+  const { name, products } = ctx.request.body;
+  return strapi.services.orders.create({
+    name,
+    products,
+    amountInCents,
+  });
+};
+
+const validateRequestAndCreateOrder = async (ctx, amountInCents) => {
   let entity;
   if (ctx.is("multipart")) {
     ctx.throw("Multipart requests are not supported.");
   } else {
-    entity = await strapi.services.orders.create({
-      ...ctx.request.body,
-      amountInCents,
-    });
+    entity = await createOrder(ctx, amountInCents);
   }
   return sanitizeEntity(entity, { model: strapi.models.orders });
 };
@@ -26,7 +32,7 @@ const addTotal = (product, quantity, total) => {
 
 const findProductAndAddTotal = async (ctx, total, productIndex) => {
   const { quantity, slug: productId } = ctx.request.body.products[productIndex];
-  const product = await strapi.services.orders.find({ slug: productId });
+  const product = await strapi.services.products.find({ slug: productId });
   if (product) {
     return addTotal(product, quantity, total);
   }
@@ -66,7 +72,7 @@ module.exports = {
     const totalInCents = await getTotal(ctx);
     const charge = await tryCreatingCharge(ctx, totalInCents);
     if (charge) {
-      return createOrder(ctx, amountInCents);
+      return validateRequestAndCreateOrder(ctx, amountInCents);
     }
   },
 };

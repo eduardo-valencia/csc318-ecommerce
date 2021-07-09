@@ -2,15 +2,17 @@
   "collectionName": "components_orders_order_items",
   "info": {
     "name": "OrderItem",
-    "icon": "ad"
+    "icon": "ad",
+    "description": ""
   },
   "options": {},
   "attributes": {
-    "product": {
-      "model": "products"
-    },
     "quantity": {
       "type": "integer"
+    },
+    "slug": {
+      "type": "string",
+      "required": true
     }
   }
 }

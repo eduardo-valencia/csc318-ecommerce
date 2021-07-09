@@ -24,9 +24,9 @@ const addTotal = (product, quantity, total) => {
   total += priceForQuantity;
 };
 
-const findProductAndAddTotal = async (ctx, total) => {
-  const { quantity, slug: productId } = ctx.request.body.products;
-  const product = await strapi.services.orders.find({ id: productId });
+const findProductAndAddTotal = async (ctx, total, productIndex) => {
+  const { quantity, slug: productId } = ctx.request.body.products[productIndex];
+  const product = await strapi.services.orders.find({ slug: productId });
   if (product) {
     return addTotal(product, quantity, total);
   }
@@ -37,7 +37,7 @@ const getTotal = async (ctx) => {
   let totalInCents = 0;
   const { products } = ctx.request.body;
   for (let productIndex = 0; productIndex < products.length; productIndex++) {
-    await findProductAndAddTotal(ctx, totalInCents);
+    await findProductAndAddTotal(ctx, totalInCents, productIndex);
   }
   return totalInCents;
 };
@@ -45,7 +45,7 @@ const getTotal = async (ctx) => {
 const tryCreatingCharge = async (ctx, totalInCents) => {
   try {
     return await stripe.charges.create({
-      ...ctx.request.body.token,
+      source: ctx.request.body.token.id,
       amount: totalInCents,
       currency: "USD",
     });
@@ -63,7 +63,7 @@ module.exports = {
    */
 
   async create(ctx) {
-    const totalInCents = getTotal(ctx);
+    const totalInCents = await getTotal(ctx);
     const charge = await tryCreatingCharge(ctx, totalInCents);
     if (charge) {
       return createOrder(ctx, amountInCents);

@@ -24,17 +24,19 @@ const validateRequestAndCreateOrder = async (ctx, amountInCents) => {
   return sanitizeEntity(entity, { model: strapi.models.orders });
 };
 
-const addTotal = (product, quantity, total) => {
+const getNewTotal = (product, quantity, total) => {
   const priceInCents = product.price * 100;
   const priceForQuantity = quantity * priceInCents;
-  total += priceForQuantity;
+  console.log("priceForQuantity", priceForQuantity);
+  return total + priceForQuantity;
 };
 
 const findProductAndAddTotal = async (ctx, total, productIndex) => {
   const { quantity, slug: productId } = ctx.request.body.products[productIndex];
-  const product = await strapi.services.products.find({ slug: productId });
+  const product = await strapi.services.products.findOne({ slug: productId });
+  console.log("product", product);
   if (product) {
-    return addTotal(product, quantity, total);
+    return getNewTotal(product, quantity, total);
   }
   return ctx.throw(`Could not find product ${productId}`);
 };
@@ -43,7 +45,11 @@ const getTotal = async (ctx) => {
   let totalInCents = 0;
   const { products } = ctx.request.body;
   for (let productIndex = 0; productIndex < products.length; productIndex++) {
-    await findProductAndAddTotal(ctx, totalInCents, productIndex);
+    totalInCents = await findProductAndAddTotal(
+      ctx,
+      totalInCents,
+      productIndex
+    );
   }
   return totalInCents;
 };
@@ -72,7 +78,7 @@ module.exports = {
     const totalInCents = await getTotal(ctx);
     const charge = await tryCreatingCharge(ctx, totalInCents);
     if (charge) {
-      return validateRequestAndCreateOrder(ctx, amountInCents);
+      return validateRequestAndCreateOrder(ctx, totalInCents);
     }
   },
 };

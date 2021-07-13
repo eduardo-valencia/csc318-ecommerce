@@ -8,9 +8,7 @@ You must create a `.env` file in the root folder. If you do not add this file, t
 
 ### Example
 
-```
-STRIPE_SECRET_KEY="my secret key"
-```
+If you want to test the application, please copy the text from the `.env.example` file and paste it into a `.env` file. Then, start your application.
 
 ### Install the packages
 
